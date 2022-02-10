@@ -1,16 +1,32 @@
 
 import React from 'react'
-import {StyleSheet, Text, View, TouchableOpacity, Alert, ImageBackground, Image} from 'react-native'
+import {StyleSheet, Text, View, TouchableOpacity, Alert, ImageBackground,Dimensions,Platform} from 'react-native'
 import {Camera} from 'expo-camera'
 import { Icon } from 'react-native-elements'
 import axios from 'axios'
+const {height,width}=Dimensions.get('window')
 let camera
 export default function CameraModule() {
+  const screenRatio = height / width;
   const [startCamera, setStartCamera] = React.useState(false)
   const [previewVisible, setPreviewVisible] = React.useState(false)
   const [capturedImage, setCapturedImage] = React.useState(null)
   const [cameraType, setCameraType] = React.useState(Camera.Constants.Type.back)
   const [flashMode, setFlashMode] = React.useState('off')
+  const [ratio,setRatio]=React.useState('4:3')
+  const [isratio,setIsRatio]=React.useState(false)
+
+  const getRatio= async()=>{
+    if (Platform.OS==="android"){
+      const ratios = await camera.getSupportedRatiosAsync().catch((err)=>{console.log(err);});
+      
+      const {height,width}=Dimensions.get('window');
+      let desiredRatio=height/width
+      // const screenRatio = height / width;
+      // console.log(ratios,screenRatio)
+      return {ratios,desiredRatio}
+    }
+  }
 
   const __startCamera = async () => {
     const {status} = await Camera.requestCameraPermissionsAsync()
@@ -25,7 +41,7 @@ export default function CameraModule() {
     const options={
         base64:true,
         exif:true,
-        skipProcessing:true
+        // skipProcessing:true
     }
     const photo= await camera.takePictureAsync(options)
     // console.log(photo)
@@ -35,6 +51,7 @@ export default function CameraModule() {
   }
   const __savePhoto =() => {
     let config = { headers: {  
+      // 'Content-Type':'image/png',
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*'}
 }
@@ -54,7 +71,7 @@ export default function CameraModule() {
       //   console.log(err);
       // })
 
-    axios.post("http://192.168.1.8:8080/img",JSON.stringify(base) ,config).then((res)=>console.log(res)).catch((err)=>{console.log(err);})
+  axios.post("http://192.168.1.3:8080/img",JSON.stringify(base) ,config).then((res)=>console.log(res)).catch((err)=>{console.log(err);})
     __startCamera()
   }
   const __retakePicture = () => {
@@ -77,6 +94,25 @@ export default function CameraModule() {
     } else {
       setCameraType('back')
     }
+   
+  }
+  const cameraReadyStatus= async()=>{
+    let {ratios,desiredRatio}= await getRatio().catch((err)=>console.log(err));
+    
+  
+    let tempCalculatedratio=[]
+    let realRatios = {};
+   
+    ratios.forEach((ratio)=>{
+     let [width,height]=ratio.split(":")
+        let actualComputedRatio= Number(width)/Number(height)
+        realRatios[actualComputedRatio]=ratio;
+        tempCalculatedratio.push(actualComputedRatio)
+    })
+    var closest = tempCalculatedratio.reduce(function(prev, curr) {
+      return (Math.abs(curr - desiredRatio) < Math.abs(prev - desiredRatio) ? curr : prev);
+    });
+    setRatio(`${realRatios[closest]}`)
   }
   return (
    
@@ -96,7 +132,8 @@ export default function CameraModule() {
               ref={(r) => {
                 camera = r
               }}
-              ratio={'16:9'}
+              onCameraReady={cameraReadyStatus}
+              ratio={`${ratio}`}
               focusDepth={1}
               zoom={0}
             >
@@ -188,9 +225,9 @@ export default function CameraModule() {
                       
                     >
                         
-                        <Icon 
+                    <Icon 
 
-                    name='camera'
+                      name='camera'
                       type='material'
                      
                       size={35}
