@@ -36,6 +36,8 @@ export default function CameraModule() {
     } else {
       Alert.alert('Access denied')
     }
+    let pictureSize= await camera.getAvailablePictureSizesAsync(ratio).catch((err)=>console.log(err))
+    console.log(pictureSize)
   }
   const __takePicture = async () => {
     const options={
@@ -48,7 +50,10 @@ export default function CameraModule() {
     setPreviewVisible(true)
     //setStartCamera(false)
     setCapturedImage(photo)
+
   }
+
+
   const __savePhoto =() => {
     let config = { headers: {  
       // 'Content-Type':'image/png',
@@ -58,21 +63,10 @@ export default function CameraModule() {
     let base={
       base64Img:`${capturedImage.base64}`
     }
-
-      // fetch('http://127.0.0.1:7000/',{
-      //   method:'POST',
-      //   headers:{
-      //     'Content-Type':'application/json'
-      //   },
-      //   body:JSON.stringify(base)
-      // }).then((res)=>{
-      //   console.log(res);
-      // }).catch((err)=>{
-      //   console.log(err);
-      // })
-
-  axios.post("http://192.168.1.3:8080/img",JSON.stringify(base) ,config).then((res)=>console.log(res)).catch((err)=>{console.log(err);})
-    __startCamera()
+  axios.post("http://192.168.1.111:8080/img",JSON.stringify(base) ,config).then().catch((err)=>{console.log(err);})
+  setCapturedImage(null)
+  setPreviewVisible(false)
+  __startCamera()
   }
   const __retakePicture = () => {
     setCapturedImage(null)
@@ -113,6 +107,7 @@ export default function CameraModule() {
       return (Math.abs(curr - desiredRatio) < Math.abs(prev - desiredRatio) ? curr : prev);
     });
     setRatio(`${realRatios[closest]}`)
+    
   }
   return (
    
@@ -136,6 +131,7 @@ export default function CameraModule() {
               ratio={`${ratio}`}
               focusDepth={1}
               zoom={0}
+              
             >
               <View
                 style={{
