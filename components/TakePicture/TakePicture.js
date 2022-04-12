@@ -1,19 +1,50 @@
 import React from "react";
-import { StyleSheet,View,Image,TouchableOpacity,Dimensions,Text,} from "react-native";
+import { StyleSheet,View,Image,TouchableOpacity,Dimensions,Text,ActivityIndicator} from "react-native";
+import * as ImagePicker from "expo-image-picker"
+import {useSelector,useDispatch} from "react-redux"
+import axios from "axios";
+import {PdfData} from "./../../actions/index"
 
-
-
-
-
+let screenHeight=Dimensions.get("window").height;
+ let screenWidth=Dimensions.get('window').width;
 
 const TakePicture=({navigation})=>{
-
-  const __takePicture=()=>{
-    navigation.navigate("CameraModule")
+  const dispatch=useDispatch()
+  const loggedUser=useSelector((state)=>state.setUserCread)
+  const classDetails=useSelector((state)=>state.setClassDetails)
+  const [status,requestPermission]=ImagePicker.useCameraPermissions()
+  const [cCapturedImage,setCapturedImage]=React.useState("")
+  const [recivedBase,setRecivedBase]=React.useState("")
+  const __takePicture= async()=>{
+    // navigation.navigate("CameraModule")
+    if(status.status==="granted"){
+      const image= await ImagePicker.launchCameraAsync({
+          // allowsEditing:true,
+          quality:1,
+          base64:true
+      }).catch((err)=>{
+          console.log(err)
+      })
+        if(image.base64){
+        setCapturedImage(image.base64)
+        const base=await axios.post("http://192.168.2.107:8080/img",{
+          classDetails,
+          loggedUser,
+          "base64Img":image.base64
+          })
+         if(base){
+          let payload=[...base.data,image.base64]
+          dispatch(PdfData(payload))
+          setCapturedImage("")
+          navigation.navigate("Attendence_Pdf")
+         }
+        }
+    }
   }
 
     return(
-        <>
+      <View>
+        {cCapturedImage.length===0?<>
         <View style={styles.mainContainer}>
                     
                     <View style={styles.logoContainer}>
@@ -86,14 +117,15 @@ const TakePicture=({navigation})=>{
                    </View>
 
         </View>
-        </>
+        </>:<ActivityIndicator style={{display:"flex",justifyContent:"center",alignItems:"center",height:screenHeight}} size={"large"} color={"red"}/>}
+      </View>
+       
     )
 
 
 }
 
-let screenHeight=Dimensions.get("window").height;
- let screenWidth=Dimensions.get('window').width;
+
 
 const styles= StyleSheet.create({
 

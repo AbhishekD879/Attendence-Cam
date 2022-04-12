@@ -1,5 +1,7 @@
 import React,{useState} from "react";
 import { StyleSheet,View,Image,TouchableOpacity,Dimensions,Alert,ImageBackground,Text,TextInput,SafeAreaView} from "react-native";
+import {useDispatch} from "react-redux"
+import {classDetailsInfo} from "./../../actions/index"
 let screenHeight=Dimensions.get("window").height;
  let screenWidth=Dimensions.get('window').width;
 
@@ -10,16 +12,19 @@ let screenHeight=Dimensions.get("window").height;
  today = dd + '/' + mm + '/' + yyyy;
 
 const ClassInfo = ({navigation}) => {
+    const dispatch=useDispatch()
     const [subject,setSubject]=useState('');
     const [lecture,setLecture]=useState('');
+    const [className,setClassName]=useState('')
 
     const __sumbit=()=>{
         const classInfo={
             subject,
             date:today,
-            lecture
+            lecture,
+            className
         }
-        if(classInfo.subject==""|| classInfo.lecture==""){
+        if(classInfo.subject==""|| classInfo.lecture=="" || classInfo.className==""){
             Alert.alert(
                 "Alert",
                 "You have Not Entered Correct Lecture Details.",
@@ -33,10 +38,13 @@ const ClassInfo = ({navigation}) => {
                 ]
               );
         }else{
-            console.log(classInfo);
+            dispatch(classDetailsInfo(classInfo))
         navigation.navigate("TakePicture")
         }
         
+    }
+    const __handelClassName=(className)=>{
+        setClassName(className)
     }
     const __handelSubject=(subject)=>{
         setSubject(subject)
@@ -49,7 +57,7 @@ const ClassInfo = ({navigation}) => {
            
            width:screenWidth,
            height:screenHeight,
-           marginTop:Math.round((screenHeight*9)/100),
+           marginTop:Math.round((screenHeight*10)/100),
            display:'flex',
            flexDirection:'column',
            alignItems:'center'
@@ -61,8 +69,8 @@ const ClassInfo = ({navigation}) => {
                     display:'flex',
                     flexDirection:'column',
                     alignItems:'center',
-                    justifyContent:'center',
-                    marginTop:16*4
+                    justifyContent:'space-around',
+                    
                 }}>
                     <Image
                     style={{
@@ -86,6 +94,8 @@ const ClassInfo = ({navigation}) => {
                        marginTop:50
 
                    }}>
+                       <Text  style={styles.lable}>ClassName</Text>
+                       <TextInput onChangeText={__handelClassName} placeholder='example:BE,TE...' style={styles.inputs} />
                        <Text  style={styles.lable}>Subject Name</Text>
                        <TextInput onChangeText={__handelSubject} placeholder='example:Maths' style={styles.inputs} />
                        <Text  style={styles.lable}>Date</Text>

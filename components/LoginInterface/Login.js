@@ -1,12 +1,13 @@
 import React,{useState} from "react";
 import { StyleSheet,View,Image,TouchableOpacity,Dimensions,Alert,ImageBackground,Text,TextInput,SafeAreaView,Linking} from "react-native";
-
+import {userAuthCread} from "./../../actions/index"
 import { Icon } from 'react-native-elements'
-
-
-import logo from "./logo.png"
+import axios from "axios";
+import {useDispatch,useSelector} from "react-redux"
+// import logo from "./logo.png"
 
 const Login=({navigation})=>{
+    const dispatch=useDispatch()
     const [loginStatus,setLoginStatus]=useState(false)
     const [username,setUserName]=useState('');
     const [password,setPassword]=useState('');
@@ -14,7 +15,7 @@ const Login=({navigation})=>{
         username,
         password
     }
-    const __login=()=>{
+    const __login= async()=>{
         
         if(userCred.username=="" || userCred.password==""){
             Alert.alert(
@@ -30,9 +31,22 @@ const Login=({navigation})=>{
                 ]
               );
         }else{
-            setLoginStatus(true)
-            console.log(userCred);
-        navigation.navigate('ClassInfo')
+            try {
+                let status=await axios.post("http://192.168.2.107:8080/authentication",{userCred}).catch(err=>console.log(err))
+            // console.log(status.data);
+            if(status.data==="True"){
+                setLoginStatus(true)
+                dispatch(userAuthCread(userCred))
+                navigation.navigate('ClassInfo')
+            }else{
+                Alert.alert("Incorrect Details","You have Entered Incorrect Details Please Enter Again")
+                setLoginStatus(false)
+            }
+            
+            } catch (error) {
+                Alert.alert("Error Occured","Please try again")
+            }
+        
         }
         
 

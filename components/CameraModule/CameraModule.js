@@ -1,12 +1,12 @@
 
-import React from 'react'
+import React,{useEffect} from 'react'
 import {StyleSheet, Text, View, TouchableOpacity, Alert, ImageBackground,Dimensions,Platform} from 'react-native'
 import {Camera} from 'expo-camera'
 import { Icon } from 'react-native-elements'
 import axios from 'axios'
 const {height,width}=Dimensions.get('window')
 let camera
-export default function CameraModule() {
+export default function CameraModule({navigation}) {
   const screenRatio = height / width;
   const [startCamera, setStartCamera] = React.useState(false)
   const [previewVisible, setPreviewVisible] = React.useState(false)
@@ -15,7 +15,7 @@ export default function CameraModule() {
   const [flashMode, setFlashMode] = React.useState('off')
   const [ratio,setRatio]=React.useState('4:3')
   const [isratio,setIsRatio]=React.useState(false)
-
+  
   const getRatio= async()=>{
     if (Platform.OS==="android"){
       const ratios = await camera.getSupportedRatiosAsync().catch((err)=>{console.log(err);});
@@ -63,10 +63,12 @@ export default function CameraModule() {
     let base={
       base64Img:`${capturedImage.base64}`
     }
-  axios.post("http://192.168.1.111:8080/img",JSON.stringify(base) ,config).then().catch((err)=>{console.log(err);})
+  // axios.post("http://192.168.1.111:8080/img",JSON.stringify(base) ,config).then().catch((err)=>{console.log(err);})
   setCapturedImage(null)
   setPreviewVisible(false)
-  __startCamera()
+  navigation.navigate("Attendence_Pdf")
+  // __startCamera()
+
   }
   const __retakePicture = () => {
     setCapturedImage(null)
@@ -109,6 +111,9 @@ export default function CameraModule() {
     setRatio(`${realRatios[closest]}`)
     
   }
+  useEffect(()=>{
+    __startCamera()
+  },[])
   return (
    
         <View
