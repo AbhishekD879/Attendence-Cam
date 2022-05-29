@@ -44,7 +44,7 @@ const ClassInfo = ({navigation}) => {
         
     }
     const __handelClassName=(className)=>{
-        setClassName(className)
+        setClassName(className.toUpperCase())
     }
     const __handelSubject=(subject)=>{
         setSubject(subject)

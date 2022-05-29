@@ -1,10 +1,10 @@
 import React from "react";
-import { StyleSheet,View,Image,TouchableOpacity,Dimensions,Text,ActivityIndicator} from "react-native";
+import { StyleSheet,View,Image,TouchableOpacity,Dimensions,Text,ActivityIndicator, Alert} from "react-native";
 import * as ImagePicker from "expo-image-picker"
 import {useSelector,useDispatch} from "react-redux"
 import axios from "axios";
 import {PdfData} from "./../../actions/index"
-
+import apiClient from "./../../axiosEndpoints/axiosEnd"
 let screenHeight=Dimensions.get("window").height;
  let screenWidth=Dimensions.get('window').width;
 
@@ -16,10 +16,13 @@ const TakePicture=({navigation})=>{
   const [cCapturedImage,setCapturedImage]=React.useState("")
   const [recivedBase,setRecivedBase]=React.useState("")
   const __takePicture= async()=>{
+    
     // navigation.navigate("CameraModule")
-    if(status.status==="granted"){
+    const result = await ImagePicker.requestCameraPermissionsAsync();
+    // status.status==="granted"
+    if(result.status==="granted" || status.status==="granted"){
       const image= await ImagePicker.launchCameraAsync({
-          // allowsEditing:true,
+          
           quality:1,
           base64:true
       }).catch((err)=>{
@@ -27,16 +30,26 @@ const TakePicture=({navigation})=>{
       })
         if(image.base64){
         setCapturedImage(image.base64)
-        const base=await axios.post("http://192.168.2.107:8080/img",{
+        
+        const base=await apiClient.post("/img",{
           classDetails,
           loggedUser,
           "base64Img":image.base64
-          })
-         if(base){
+          }).catch((err)=>console.log(err))
+         if(base.data){
           let payload=[...base.data,image.base64]
           dispatch(PdfData(payload))
           setCapturedImage("")
           navigation.navigate("Attendence_Pdf")
+         }else{
+           Alert.alert("No Student Found","Please Try Again",[
+            {
+              text:"Capture Again",
+              onPress:()=>{
+               
+                __takePicture()}
+            }
+           ])
          }
         }
     }

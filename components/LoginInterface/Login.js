@@ -5,7 +5,7 @@ import { Icon } from 'react-native-elements'
 import axios from "axios";
 import {useDispatch,useSelector} from "react-redux"
 // import logo from "./logo.png"
-
+import apiClient from "../../axiosEndpoints/axiosEnd";
 const Login=({navigation})=>{
     const dispatch=useDispatch()
     const [loginStatus,setLoginStatus]=useState(false)
@@ -24,15 +24,14 @@ const Login=({navigation})=>{
                 [
                   {
                     text: "Cancel",
-                    onPress: () => console.log("Cancel Pressed"),
                     style: "cancel"
                   },
-                  { text: "OK", onPress: () => console.log("OK Pressed") }
+                  { text: "OK"}
                 ]
               );
         }else{
             try {
-                let status=await axios.post("http://192.168.2.107:8080/authentication",{userCred}).catch(err=>console.log(err))
+                let status=await apiClient.post("/authentication",{userCred}).catch(err=>console.log(err))
             // console.log(status.data);
             if(status.data==="True"){
                 setLoginStatus(true)

@@ -1,6 +1,7 @@
 
 import * as React from 'react';
-import {View,TouchableOpacity,Text,Alert, Dimensions, } from 'react-native'
+import {View,TouchableOpacity,Text, Dimensions, Alert, } from 'react-native'
+import * as FileSystem from 'expo-file-system';
 import { StyleSheet } from 'react-native';
 import * as Print from "expo-print"
 // import RNHTMLtoPDF from 'react-native-html-to-pdf';
@@ -10,20 +11,71 @@ import { useSelector } from 'react-redux';
 
 const width=Dimensions.get("window").width;
 const height=Dimensions.get("window").height;
-const Atteendence_Pdf = () => {
+import { StorageAccessFramework } from 'expo-file-system';
+
+
+const Atteendence_Pdf = ({navigation}) => {
+  const [savedPdf,setSavedPDf]=React.useState(false)
+  // React.useEffect(
+  //   () =>
+  //     navigation.addListener('beforeRemove', (e) => {
+  //       const action = e.data.action;
+  //       e.preventDefault();
+  //       if(!savedPdf){
+  //         return
+  //       }
+        
+  //     })
+  // );
+  // React.useEffect(()=>{
+  //   navigation.removeListner('')
+  // })
+
+const savePdfFile= async(PdfMapping,base64Data)=>{
+
+  try{
+    const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
+  if (!permissions.granted) {
+      return;
+  }
+  
+  
+  
+  try {
+      await StorageAccessFramework.createFileAsync(permissions.directoryUri, `${PdfMapping[0].classDetail}_${PdfMapping[0].Subject}_${PdfMapping[0].lectureNo}`, 'application/pdf')
+          .then(async(uri) => {
+              await FileSystem.writeAsStringAsync(uri, base64Data, { encoding: FileSystem.EncodingType.Base64 });
+          })
+          .catch((e) => {
+             Alert.alert("File Error","Error Occured While Creating the File")
+          });
+  } catch (e) {
+      throw new Error(e);
+  }
+  }catch(err){
+    Alert.alert("Premission Error","Permission for Storage Was not Granted")
+  }
+}
+
 const PdfMapping=useSelector((state)=>state.setPDF)
-const [PdfUri,setPdfUri]=React.useState("")
+
+const [PdfUri,setPdfUri]=React.useState({
+  base64:"",
+  uri:""
+})
 let spread=[]
-PdfMapping[0].students.forEach((std,index)=>{
+if(PdfMapping[0].length!==0){
+  PdfMapping[0].students.forEach((std,index)=>{
     let trmp=` <tr>
-              <td>${index}</td>
+              <td>${index+1}</td>
               <td>${std}</td>
             </tr>`
             spread.push(trmp)
   })
+}
 let spread2=spread.join("\n")
 let html=`<div style="margin: 0 8rem">
-    <h1 style="text-align:center;font-size: 3.2vw;">Attendence Cam</h1>
+    <h1 style="text-align:center;font-size: 3.2vw;color:#00B7C6">Attendence__<span style="color:#6202EE">Cam</span></h1>
      <h1 style="text-align:center;font-size: 3.2vw;">PDEA College of Engineering Manjari</h1>
     <div style="float:left">
       <h3 style="font-size: 2.9vw;">Instructor name :${PdfMapping[1].username}
@@ -77,37 +129,72 @@ let html=`<div style="margin: 0 8rem">
     <img style="object-fit:contain;width:100%" src="data:image/jpeg;base64,${PdfMapping[2]}">
   </div>
   </div>`
-console.log(html);
+
 const pdfcreator= async()=>{
   const file= await Print.printToFileAsync({
     html,
+    base64:true,
   }).catch((err)=>console.log(err))
-  
-  setPdfUri(file.uri)
+ 
+setPdfUri({
+    base64:file.base64,
+    uri:file.uri
+  })
+ await savePdfFile(PdfMapping,file.base64)
+ setSavedPDf(true)
+ Alert.alert("PDF Saved","PDF has been Saved In AttendencePDF Directoary in Root of Your Device")
+ navigation.navigate("ClassInfo")
+ 
 }
 
   return (
    <>
-      {PdfUri?(
-      <>
+      {PdfUri.base64=""?(
+      <View style={{ width:width,
+        height:height,
+        display:"flex",
+        justifyContent:"center",
+        alignItems:"center"}}>
       <WebView
       style={styles.container}
       originWhitelist={['*']}
-      source={{ html:html}}
+      source={{
+      // uri:PdfUri
+      html:html,
+      }}
       />
 
-      <TouchableOpacity style={{padding:10,backgroundColor:"#6202EE",borderRadius:10}}>
+      <TouchableOpacity onPress={handelDownload} style={{padding:10,backgroundColor:"#6202EE",borderRadius:10}}>
           <Text style={{color:"white",fontSize:1.2*16}}>
             Download Sheet
         </Text>
        </TouchableOpacity>
-      </>
+      </View>
       ):(
-        <TouchableOpacity style={{padding:10,backgroundColor:"#6202EE",borderRadius:10}} onPress={pdfcreator}>
+        
+        <View style={{
+          width:width,
+          height:height,
+          display:"flex",
+          justifyContent:"center",
+          alignItems:"center"
+        }}>
+          <WebView
+      style={styles.container}
+      originWhitelist={['*']}
+      source={{
+      // uri:PdfUri
+      html:html,
+      }}
+      />
+          <TouchableOpacity style={{padding:10,backgroundColor:"#6202EE",borderRadius:10}} onPress={pdfcreator}>
           <Text style={{color:"white",fontSize:1.2*16}}>
             Create_PDF
         </Text>
-       </TouchableOpacity>)
+       </TouchableOpacity>
+        </View>
+        
+        )
       }
 
        
@@ -119,8 +206,11 @@ const styles = StyleSheet.create({
   container: {
     width,
     height,
-    flex: 1,
+    // flex: 1,
     marginTop:60,
+    display:"flex",
+    justifyContent:"center",
+    alignItems:"center"
   },
 });
 export default Atteendence_Pdf
